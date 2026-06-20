@@ -42,10 +42,13 @@ const config = {
     artifactName: '${productName}-${version}-portable.${ext}'
   },
   // Publish target for `electron-builder --publish always` (used by CI on a tag).
+  // releaseType 'release' publishes immediately instead of leaving a draft, so a
+  // tag push results in a live, downloadable release with no manual step.
   publish: {
     provider: 'github',
     owner: 'ABAbdulah',
-    repo: 'computer-storage-health-audit'
+    repo: 'computer-storage-health-audit',
+    releaseType: 'release'
   }
 }
 

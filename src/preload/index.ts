@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import {
   IPC,
+  type CleanResult,
   type DockerActionType,
   type DockerInfo,
   type DriveInfo,
@@ -47,7 +48,11 @@ const api: SpaceScopeApi = {
     const handler = (_e: unknown, s: SysStats): void => cb(s)
     ipcRenderer.on(IPC.sysStats, handler)
     return () => ipcRenderer.removeListener(IPC.sysStats, handler)
-  }
+  },
+
+  cleanPaths: (paths: string[]) => ipcRenderer.invoke(IPC.cleanPaths, paths) as Promise<CleanResult>,
+  cleanQuickWin: (id: string, p?: string) =>
+    ipcRenderer.invoke(IPC.cleanQuickWin, id, p) as Promise<CleanResult>
 }
 
 contextBridge.exposeInMainWorld('spacescope', api)

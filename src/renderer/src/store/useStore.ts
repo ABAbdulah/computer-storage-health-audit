@@ -8,7 +8,8 @@ import type {
   ScanStatus,
   Category,
   DockerInfo,
-  DockerActionType
+  DockerActionType,
+  CleanResult
 } from '@shared/types'
 import { findNode } from '@/lib/tree'
 
@@ -75,6 +76,11 @@ interface State {
   dockerBusyId: string | null
   loadDockerInfo: () => Promise<void>
   runDockerAction: (action: DockerActionType, id?: string) => Promise<{ ok: boolean; error?: string }>
+
+  // Safe Clean
+  cleaning: boolean
+  runClean: (paths: string[]) => Promise<CleanResult>
+  cleanQuickWin: (id: string, path?: string) => Promise<CleanResult>
 
   // Actions
   openInExplorer: (path: string) => Promise<void>
@@ -169,6 +175,27 @@ export const useStore = create<State>((set, get) => ({
     }
   },
 
+  cleaning: false,
+  runClean: async (paths) => {
+    set({ cleaning: true })
+    try {
+      const res = await window.spacescope.cleanPaths(paths)
+      // Refresh reclaimable figures after a clean.
+      const drive = get().activeDrive
+      if (drive) void get().loadQuickWins(drive)
+      return res
+    } finally {
+      set({ cleaning: false })
+    }
+  },
+
+  cleanQuickWin: async (id, path) => {
+    const res = await window.spacescope.cleanQuickWin(id, path)
+    const drive = get().activeDrive
+    if (drive) void get().loadQuickWins(drive)
+    return res
+  },
+
   openInExplorer: async (path) => {
     await window.spacescope.openInExplorer(path)
   },
@@ -182,6 +209,28 @@ export const useStore = create<State>((set, get) => ({
 
     void get().loadDrives()
     void get().loadDockerInfo()
+
+    // On window focus: re-check Docker (it may have just started), and refresh
+    // the Quick Wins sizes — so reclaimable numbers (temp, recycle bin, caches…)
+    // self-update after the user cleans something in Explorer and comes back.
+    // Throttled so the size walks don't run on every little focus change.
+    const onFocus = (): void => {
+      if (!get().dockerInfo?.available) void get().loadDockerInfo()
+      const s = get()
+      const qwAge = s.quickWins ? Date.now() - s.quickWins.computedAt : Infinity
+      if (s.activeDrive && s.status !== 'scanning' && qwAge > 12000) {
+        void get().loadQuickWins(s.activeDrive)
+      }
+    }
+    window.addEventListener('focus', onFocus)
+    let tries = 0
+    const retry = setInterval(() => {
+      if (get().dockerInfo?.available || tries++ >= 5) {
+        clearInterval(retry)
+        return
+      }
+      void get().loadDockerInfo()
+    }, 4000)
 
     // Restore last scan from cache so reopening shows results instantly.
     void window.spacescope.getCachedScan().then((cached) => {

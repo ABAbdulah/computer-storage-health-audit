@@ -7,6 +7,7 @@ import { getDrives } from './drives'
 import { getQuickWins } from './quickwins'
 import { ScanManager } from './scanner'
 import { getDockerInfo, dockerAction } from './docker'
+import { cleanPaths, cleanQuickWin } from './clean'
 
 const scanManager = new ScanManager()
 
@@ -117,6 +118,14 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle(IPC.dockerAction, async (_e, action: DockerActionType, id?: string) => {
     return dockerAction(action, id)
+  })
+
+  ipcMain.handle(IPC.cleanPaths, async (_e, paths: string[]) => {
+    return cleanPaths(Array.isArray(paths) ? paths : [])
+  })
+
+  ipcMain.handle(IPC.cleanQuickWin, async (_e, id: string, p?: string) => {
+    return cleanQuickWin(id, p)
   })
 }
 

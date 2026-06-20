@@ -99,6 +99,13 @@ export function DockerPanel(): JSX.Element | null {
         <div className="flex items-center gap-2 text-xs text-muted">
           <Container size={15} className="text-faint" />
           <span className="flex-1">{dockerInfo.error || 'Docker not detected'}</span>
+          <button
+            onClick={() => void loadDockerInfo()}
+            className="rounded-md p-1 text-muted hover:text-content"
+            title="Check again"
+          >
+            <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+          </button>
         </div>
       </div>
     )

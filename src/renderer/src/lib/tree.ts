@@ -1,4 +1,4 @@
-import type { ScanNode } from '@shared/types'
+import type { Category, ScanNode } from '@shared/types'
 
 /** Find a node by its absolute path within the tree (DFS, prefix-pruned). */
 export function findNode(root: ScanNode, targetPath: string): ScanNode | null {
@@ -48,4 +48,29 @@ export function pathChain(root: ScanNode, targetPath: string): ScanNode[] {
 /** Flatten a subtree into a list of leaf-ish rows for the list view. */
 export function flattenChildren(node: ScanNode): ScanNode[] {
   return node.children ? [...node.children] : []
+}
+
+/**
+ * Collect the "top-most" nodes of a category anywhere in the tree — i.e. the
+ * largest items that belong to `cat` without double-counting nested ones. A node
+ * qualifies when its category is `cat` and its parent's category is not `cat`
+ * (so e.g. the ext4.vhdx file, or a node_modules folder, is returned once — not
+ * also all its children). Sorted largest first.
+ */
+export function collectByCategory(root: ScanNode, cat: Category): ScanNode[] {
+  const out: ScanNode[] = []
+  const walk = (node: ScanNode, parentIsSame: boolean): void => {
+    const isMatch = node.category === cat
+    if (isMatch && !parentIsSame && node.size > 0) {
+      out.push(node)
+      // Still descend so we can show a drill option, but children won't be
+      // re-collected as separate top-level results (parentIsSame = true).
+    }
+    if (node.children) {
+      for (const child of node.children) walk(child, isMatch)
+    }
+  }
+  walk(root, false)
+  out.sort((a, b) => b.size - a.size)
+  return out
 }

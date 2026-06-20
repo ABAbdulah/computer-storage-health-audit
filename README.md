@@ -61,7 +61,7 @@ This launches Electron with Vite HMR — edit any renderer file and it hot-reloa
 npm run build
 ```
 
-Produces an NSIS installer (`.exe`) and a portable build in `release/<version>/` via electron-builder.
+Produces `SpaceScope-Setup-x64.exe` (NSIS installer) and a portable build in `release/<version>/` via electron-builder.
 To produce an unpacked app folder without an installer (faster, for testing):
 
 ```bash
@@ -69,6 +69,34 @@ npm run build:dir
 ```
 
 > **App icon:** place a `build/icon.ico` (256×256) to brand the installer and window; otherwise the default Electron icon is used.
+
+### Publishing a release (so the website download works)
+
+The landing page's download button points at the latest release asset
+`SpaceScope-Setup-x64.exe`. Publish a release one of two ways:
+
+**Automated (recommended)** — push a version tag and GitHub Actions builds + publishes:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+The [`.github/workflows/release.yml`](.github/workflows/release.yml) workflow runs
+`npm run release` on a Windows runner and attaches the installer to a new GitHub
+Release automatically (uses the built-in `GITHUB_TOKEN`).
+
+**Manual** — run `npm run build`, then on GitHub create a new Release for the tag
+and drag `release/<version>/SpaceScope-Setup-x64.exe` into the assets.
+
+### macOS
+
+There's no macOS build yet. The UI and the scan engine are cross-platform, but
+the Windows-specific features (Quick Wins, Recycle Bin sizing, Docker/WSL `.vhdx`
+detection, drive labels) need macOS equivalents first, and a `.dmg` must be built
+on macOS (electron-builder can't build/sign Mac apps from Windows) — typically via
+the `macos-latest` job stubbed in the release workflow, plus an Apple Developer
+account for signing/notarization.
 
 ### Type-check
 
@@ -131,7 +159,8 @@ src/
   shared/       Types + categorization + formatting shared by both sides
   workers/      The worker-thread scan script
 electron.vite.config.ts     bundling (main / preload / renderer)
-electron-builder.config.ts  Windows packaging (NSIS + portable)
+electron-builder.config.cjs Windows packaging (NSIS + portable, GitHub publish)
+.github/workflows/release.yml  tag-triggered build + publish
 tailwind.config.js          design tokens mapped to CSS variables
 ```
 

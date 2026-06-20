@@ -89,6 +89,8 @@ export function TopBar(): JSX.Element {
   const setSearch = useStore((s) => s.setSearch)
   const viewMode = useStore((s) => s.viewMode)
   const setViewMode = useStore((s) => s.setViewMode)
+  const categoryFilter = useStore((s) => s.categoryFilter)
+  const setCategoryFilter = useStore((s) => s.setCategoryFilter)
   const toggleRightPanel = useStore((s) => s.toggleRightPanel)
   const rightPanelOpen = useStore((s) => s.rightPanelOpen)
   const hasResult = useStore((s) => s.result !== null)
@@ -136,8 +138,15 @@ export function TopBar(): JSX.Element {
         )}
         <SegmentedControl
           layoutId="view-toggle"
-          value={viewMode}
-          onChange={setViewMode}
+          // A category filter renders a focused list, so reflect that here
+          // instead of leaving "Map" highlighted while a list is shown.
+          value={categoryFilter ? 'list' : viewMode}
+          onChange={(v) => {
+            // Switching either tab exits the category focus and returns to the
+            // whole-drive view in the chosen mode.
+            if (categoryFilter) setCategoryFilter(categoryFilter)
+            setViewMode(v)
+          }}
           options={[
             { value: 'treemap', label: 'Map', icon: <MapIcon size={14} /> },
             { value: 'list', label: 'List', icon: <ListIcon size={14} /> }

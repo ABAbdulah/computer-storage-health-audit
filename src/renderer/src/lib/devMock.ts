@@ -194,6 +194,16 @@ export function installDevMock(): void {
       console.log('[devMock] dockerAction', action, id)
       return { ok: true }
     },
+    cleanPaths: async (paths: string[]) => {
+      // eslint-disable-next-line no-console
+      console.log('[devMock] cleanPaths', paths)
+      return { freedBytes: paths.length * 0.4 * GB, cleared: paths.length, failed: 0 }
+    },
+    cleanQuickWin: async (id: string) => {
+      // eslint-disable-next-line no-console
+      console.log('[devMock] cleanQuickWin', id)
+      return { freedBytes: 0.3 * GB, cleared: 1, failed: 0 }
+    },
     onSysStats: (cb: (s: SysStats) => void) => {
       let cpu = 24
       let gpu = 12

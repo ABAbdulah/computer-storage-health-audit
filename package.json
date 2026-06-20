@@ -11,8 +11,9 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "build": "electron-vite build && electron-builder --config electron-builder.config.ts",
-    "build:dir": "electron-vite build && electron-builder --dir --config electron-builder.config.ts"
+    "build": "electron-vite build && electron-builder --config electron-builder.config.cjs",
+    "build:dir": "electron-vite build && electron-builder --dir --config electron-builder.config.cjs",
+    "release": "electron-vite build && electron-builder --config electron-builder.config.cjs --publish always"
   },
   "dependencies": {
     "d3-hierarchy": "^3.1.2"

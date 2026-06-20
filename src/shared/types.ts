@@ -203,6 +203,23 @@ export interface SpaceScopeApi {
   dockerAction(action: DockerActionType, id?: string): Promise<{ ok: boolean; error?: string }>
   // Live system monitor
   onSysStats(cb: (s: SysStats) => void): () => void
+  // Safe Clean — permanently clears the CONTENTS of whitelisted cache/temp
+  // folders only. The main process re-validates every path before deleting.
+  cleanPaths(paths: string[]): Promise<CleanResult>
+  /** Clean a single Quick Win by its id (only safe ids are honored). */
+  cleanQuickWin(id: string, path?: string): Promise<CleanResult>
+}
+
+/** Quick Win ids that are safe to clean directly from the panel. */
+export const CLEANABLE_WINS = ['temp', 'recycle', 'chrome', 'edge', 'firefox', 'thumbnails'] as const
+
+export interface CleanResult {
+  /** Bytes freed on the drive (measured before/after). */
+  freedBytes: number
+  /** Folders successfully cleared. */
+  cleared: number
+  /** Folders skipped (failed validation, locked, or vanished). */
+  failed: number
 }
 
 /** IPC channel names — single source of truth. */
@@ -220,5 +237,7 @@ export const IPC = {
   scanError: 'scan:error',
   getDockerInfo: 'docker:info',
   dockerAction: 'docker:action',
-  sysStats: 'sys:stats'
+  sysStats: 'sys:stats',
+  cleanPaths: 'clean:paths',
+  cleanQuickWin: 'clean:quickwin'
 } as const

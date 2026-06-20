@@ -1,0 +1,48 @@
+name: Release
+
+# Push a version tag (e.g. v1.0.0) to build the installer and publish a
+# GitHub Release with the assets attached.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build & publish installer
+        run: npm run release
+        env:
+          # Provided automatically by Actions; lets electron-builder create the release.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # macOS build is disabled by default — see README "macOS" section.
+  # The renderer + scanner run on macOS, but the Windows-specific features
+  # (Quick Wins, Recycle Bin, Docker/WSL disk detection) need macOS equivalents
+  # first, and signing/notarization needs an Apple Developer account.
+  #
+  # macos:
+  #   runs-on: macos-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with: { node-version: 20, cache: npm }
+  #     - run: npm ci
+  #     - run: npm run release
+  #       env:
+  #         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

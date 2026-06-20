@@ -5,6 +5,8 @@ import { Treemap } from './Treemap'
 import { ListView } from './ListView'
 import { EmptyState } from './EmptyState'
 import { ScanningView } from './ScanningView'
+import { CategoryView } from './CategoryView'
+import { RescanBar } from './RescanBar'
 import { ByteTicker } from './NumberTicker'
 import { catColor, CATEGORY_LABELS } from '@/lib/categories'
 import { CATEGORIES, type Category } from '@shared/types'
@@ -78,12 +80,21 @@ export function MainContent(): JSX.Element {
   const status = useStore((s) => s.status)
   const result = useStore((s) => s.result)
   const viewMode = useStore((s) => s.viewMode)
+  const categoryFilter = useStore((s) => s.categoryFilter)
+
+  // A rescan running on top of existing results — show progress and mark the
+  // (now stale) data as refreshing rather than silently leaving old numbers up.
+  const rescanning = status === 'scanning' && !!result
 
   let body: JSX.Element
   if (status === 'scanning' && !result) {
     body = <ScanningView />
   } else if (!result) {
     body = <EmptyState />
+  } else if (categoryFilter) {
+    // A category was selected (e.g. from the sidebar) — show every item of that
+    // category across the whole drive, largest first.
+    body = <CategoryView />
   } else {
     body = (
       <div className="flex h-full flex-col">
@@ -106,5 +117,16 @@ export function MainContent(): JSX.Element {
     )
   }
 
-  return <main className="flex min-w-0 flex-1 flex-col overflow-hidden p-5">{body}</main>
+  return (
+    <main className="flex min-w-0 flex-1 flex-col overflow-hidden p-5">
+      <AnimatePresence>{rescanning && <RescanBar />}</AnimatePresence>
+      <div
+        className={`flex min-h-0 flex-1 flex-col transition-opacity duration-300 ${
+          rescanning ? 'pointer-events-none opacity-40' : 'opacity-100'
+        }`}
+      >
+        {body}
+      </div>
+    </main>
+  )
 }
